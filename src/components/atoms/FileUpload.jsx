@@ -20,7 +20,7 @@ const FileUpload = ({ label = "Upload File", onChange }) => {
         <span className="flex justify-center items-center gap-1 para-font"><GrFormUpload className="w-8 h-8" />{label}</span>
         <input
           type="file"
-          accept="image/*"
+          accept=".png,.jpeg,.pdf,.doc,.docx"
           onChange={handleChange}
           className="hidden"
         />
