@@ -54,10 +54,10 @@ const JobTabsSection = ({
             >
               <div className="flex flex-col sm:flex-row justify-between gap-3 items-start sm:items-center">
                 <div className="flex-1">
-                  <h4 className="font-semibold text-base sm:text-lg text-gray-800">
+                  <h4 className="font-semibold heading-font text-base sm:text-lg text-gray-800">
                     {job.title}
                   </h4>
-                  <p className="text-gray-600 text-sm sm:text-base">{job.company}</p>
+                  <p className="text-gray-600 para-font text-sm sm:text-base">{job.company}</p>
                 </div>
 
                 <Link

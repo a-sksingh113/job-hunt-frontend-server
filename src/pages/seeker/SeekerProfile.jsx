@@ -29,7 +29,7 @@ const SeekerProfile = () => {
   const [isProfileEditOpen, setIsProfileEditOpen] = useState(false);
   const [isProfessionalEditOpen, setIsProfessionalEditOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [profil, setProfile] = useState(null);
+  const [resumeFile, setResumeFile] = useState(null);
   const [appliedJobs, setAppliedJobs] = useState([]);
   const [appliedJobsLoading, setAppliedJobsLoading] = useState(true);
 
@@ -43,7 +43,7 @@ const SeekerProfile = () => {
     setJobSeeker((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleFile = (file) => setProfile(file);
+  const handleFile = (file) => setResumeFile(file);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -79,49 +79,57 @@ const SeekerProfile = () => {
   }, []);
 
   const handleSaveProfileUpdate = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+  e.preventDefault();
+  setLoading(true);
 
-    const payload = {
-      name: user.name,
-      domain: jobSeeker.domain,
-      location: jobSeeker.location,
-      experienceYears: Number(jobSeeker.experienceYears),
-      phone: jobSeeker.phone,
-      skills: jobSeeker.skills,
-      resumeUrl: jobSeeker.resumeUrl,
-      availabilityStatus: jobSeeker.availabilityStatus,
-      // Optionally add profilePicUrl if you're uploading an image
-    };
+  try {
+    const formData = new FormData();
 
-    try {
-      const response = await axios.put("/jobseeker/profile/update", payload);
+    formData.append("name", user.name);
+    formData.append("domain", jobSeeker.domain);
+    formData.append("location", jobSeeker.location);
+    formData.append("experienceYears", jobSeeker.experienceYears);
+    formData.append("phone", jobSeeker.phone);
+    formData.append("availabilityStatus", jobSeeker.availabilityStatus);
+    formData.append("skills", JSON.stringify(jobSeeker.skills)); // stringify array
 
-      if (response.data.success) {
-        toast.success("Profile updated successfully!");
-        const updated = response.data.updated;
-        setJobSeeker({
-          domain: updated.domain || "",
-          location: updated.location || "",
-          experienceYears: updated.experienceYears?.toString() || "",
-          phone: updated.phone || "",
-          skills: updated.skills || [],
-          resumeUrl: updated.resumeUrl || "",
-          availabilityStatus: updated.availabilityStatus || "",
-        });
-
-        setIsProfileEditOpen(false);
-        setIsProfessionalEditOpen(false);
-      } else {
-        toast.error("Failed to update profile");
-      }
-    } catch (error) {
-      console.error("Update error:", error);
-      toast.error("Something went wrong while updating");
-    } finally {
-      setLoading(false);
+    if (resumeFile) {
+      formData.append("resumeUrl", resumeFile); // matches multer field name
     }
-  };
+
+    const response = await axios.put("/jobseeker/profile/update", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+
+    if (response.data.success) {
+      toast.success("Profile updated successfully!");
+
+      const updated = response.data.updated;
+
+      setJobSeeker({
+        domain: updated.domain || "",
+        location: updated.location || "",
+        experienceYears: updated.experienceYears?.toString() || "",
+        phone: updated.phone || "",
+        skills: updated.skills || [],
+        resumeUrl: updated.resumeUrl || "",
+        availabilityStatus: updated.availabilityStatus || "",
+      });
+
+      setIsProfileEditOpen(false);
+      setIsProfessionalEditOpen(false);
+      setResumeFile(null);
+    } else {
+      toast.error("Failed to update profile");
+    }
+  } catch (error) {
+    console.error("Update error:", error);
+    toast.error("Something went wrong");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   useEffect(() => {
     const fetchAppliedJobs = async () => {
@@ -274,7 +282,7 @@ const SeekerProfile = () => {
               placeholder="Location"
               className="w-full input mb-2"
             />
-            {/* <FileUpload className="!mt-2" label="Upload Profile Picture" onChange={handleFile} /> */}
+
             {loading ? (
               <Loading width="100%" />
             ) : (
@@ -339,13 +347,18 @@ const SeekerProfile = () => {
               placeholder="Skills (comma-separated)"
               className="w-full input"
             />
-            <input
+            {/* <input
               type="text"
               name="resumeUrl"
               value={jobSeeker.resumeUrl}
               onChange={handleProfessionalChange}
               placeholder="Resume URL"
               className="w-full input"
+            /> */}
+            <FileUpload
+              className="!mt-2"
+              label="Upload Your Resume (.png, .jpeg, .pdf, .doc only)"
+              onChange={handleFile}
             />
             <select
               name="availabilityStatus"
@@ -375,4 +388,4 @@ const SeekerProfile = () => {
   );
 };
 
-export default SeekerProfile;
+export default SeekerProfile;

@@ -3,7 +3,6 @@ import api from "../../api/axios";
 import FileUpload from "../../components/atoms/FileUpload";
 import Loading from "../../components/atoms/Loading";
 import { toast } from "react-hot-toast";
-import { useNavigate } from "react-router-dom";
 
 const SeekerSignup = () => {
   const [formData, setFormData] = useState({
@@ -15,56 +14,53 @@ const SeekerSignup = () => {
     location: "",
     experienceYears: "",
     skills: "",
-    resumeUrl: "",
-    profilePic: null,
+    resumeUrl: null,
   });
 
   const [showPassword, setShowPassword] = useState(false);
-  const [profilePreview, setProfilePreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const navigate = useNavigate();
 
   const handleChange = (e) => {
-    const { name, value, files } = e.target;
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
-    if (name === "profilePic") {
-      const file = files[0];
-      setFormData((prev) => ({ ...prev, profilePic: file }));
-
-      if (file) {
-        const reader = new FileReader();
-        reader.onloadend = () => setProfilePreview(reader.result);
-        reader.readAsDataURL(file);
-      }
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
-    }
+  const handleResumeUpload = (file) => {
+    setFormData((prev) => ({ ...prev, resumeUrl: file }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    const payload = {
-      fullName: formData.name,
-      email: formData.email,
-      password: formData.password,
-      phone: formData.phone,
-      domain: formData.domain,
-      location: formData.location,
-      experienceYears: Number(formData.experienceYears),
-      skills: formData.skills.split(",").map((skill) => skill.trim()),
-      resumeUrl: formData.resumeUrl,
-    };
+    const form = new FormData();
+    form.append("fullName", formData.name);
+    form.append("email", formData.email);
+    form.append("password", formData.password);
+    form.append("phone", formData.phone);
+    form.append("domain", formData.domain);
+    form.append("location", formData.location);
+    form.append("experienceYears", formData.experienceYears);
+    form.append(
+      "skills",
+      JSON.stringify(formData.skills.split(",").map((s) => s.trim()))
+    );
+    if (formData.resumeUrl) {
+      form.append("resumeUrl", formData.resumeUrl);
+    }
 
     try {
-      const response = await api.post("/auth/seeker-signup", payload);
-      if (response.data.success) {
+      const res = await api.post("/auth/seeker-signup", form, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      if (res.data.success) {
         toast.success(
-          "Registration successful! Verification Link sent to your registered mail"
+          "Registration successful! Check your email for verification."
         );
         localStorage.setItem("verifyEmail", formData.email);
 
+        // Reset form
         setFormData({
           name: "",
           email: "",
@@ -74,19 +70,14 @@ const SeekerSignup = () => {
           location: "",
           experienceYears: "",
           skills: "",
-          resumeUrl: "",
-          profilePic: null,
+          resumeUrl: null,
         });
-        setProfilePreview(null);
       } else {
-        toast.error(response.data.message || "Registration failed.");
+        toast.error(res.data.message || "Registration failed.");
       }
-    } catch (error) {
-      const message =
-        error.response?.data?.message ||
-        "Something went wrong. Please try again.";
-      console.error("Signup error:", message);
+    } catch (err) {
       toast.error("Something went wrong. Please try again.");
+      console.error("Signup Error:", err);
     } finally {
       setIsSubmitting(false);
     }
@@ -107,7 +98,6 @@ const SeekerSignup = () => {
         required
         className="input"
       />
-
       <input
         type="email"
         name="email"
@@ -145,7 +135,6 @@ const SeekerSignup = () => {
         required
         className="input"
       />
-
       <input
         type="text"
         name="domain"
@@ -155,7 +144,6 @@ const SeekerSignup = () => {
         required
         className="input"
       />
-
       <input
         type="text"
         name="location"
@@ -165,7 +153,6 @@ const SeekerSignup = () => {
         required
         className="input"
       />
-
       <input
         type="number"
         name="experienceYears"
@@ -175,7 +162,6 @@ const SeekerSignup = () => {
         required
         className="input"
       />
-
       <input
         type="text"
         name="skills"
@@ -186,17 +172,11 @@ const SeekerSignup = () => {
         className="input"
       />
 
-      <input
-        type="url"
-        name="resumeUrl"
-        placeholder="Resume URL"
-        value={formData.resumeUrl}
-        onChange={handleChange}
-        required
-        className="input"
+      <FileUpload
+        label="Upload Resume (.png, .jpeg, .pdf, .doc only)"
+        onChange={handleResumeUpload}
       />
 
-      {/* <FileUpload label="Upload Company Logo" onChange={handleChange} /> */}
       {isSubmitting ? (
         <Loading width="100%" />
       ) : (
@@ -205,11 +185,11 @@ const SeekerSignup = () => {
           disabled={isSubmitting}
           className="w-full red-button"
         >
-          Reigister as Job Seeker
+          Register as Job Seeker
         </button>
       )}
     </form>
   );
 };
 
-export default SeekerSignup;
+export default SeekerSignup;
