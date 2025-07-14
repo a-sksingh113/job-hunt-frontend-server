@@ -35,7 +35,7 @@ const AllApplications = () => {
   return (
     <div className="px-4 md:px-20 py-8">
       <h1 className="text-3xl md:text-4xl font-extrabold text-red-700 mb-4 heading-font">
-        All Applied Applications
+        All Job-Seekers Applications
       </h1>
       <div className="h-px bg-red-700 mb-6" />
 
@@ -45,7 +45,7 @@ const AllApplications = () => {
         </div>
       ) : applications.length === 0 ? (
         <p className="text-center text-gray-500 text-lg mt-8">
-          No applied applications found.
+          No Job-seekers applications found.
         </p>
       ) : (
         <div className="flex overflow-x-auto gap-4 pb-4">
